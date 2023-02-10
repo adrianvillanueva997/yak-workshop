@@ -1,4 +1,4 @@
 fn main() {
-    println!("Hello, world!");
-    yak::add(1, 2);
+    let yak = yak::Yak::new(1.0);
+    yak.is_alive();
 }
