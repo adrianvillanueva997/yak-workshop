@@ -24,7 +24,7 @@ impl Yak {
         if self.age < 1.0 {
             return false;
         }
-        let shaving_calculation = day % (self.years_to_days(day) * 0.01);
-        shaving_calculation.round() == 0.0
+        let shaving_calculation = day % (8.0 + self.years_to_days(day) * 0.01);
+        shaving_calculation.floor() == 0.0
     }
 }
