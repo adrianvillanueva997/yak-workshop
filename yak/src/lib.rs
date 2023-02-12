@@ -1,12 +1,22 @@
+use serde::{Deserialize, Serialize};
+
 mod tests;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Yak {
     age: f32,
+    id: i8,
+    name: String,
+    age_last_shaved: f32,
 }
 impl Yak {
-    pub fn new(age: f32) -> Self {
-        Yak { age }
+    pub fn default(age: f32) -> Self {
+        Yak {
+            age,
+            id: Default::default(),
+            name: Default::default(),
+            age_last_shaved: Default::default(),
+        }
     }
     pub fn is_alive(self) -> bool {
         self.age >= 0.0 && self.age <= 10.0

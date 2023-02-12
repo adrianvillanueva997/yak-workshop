@@ -28,29 +28,29 @@ pub mod tests {
     use crate::Yak;
     #[test]
     fn is_alive() {
-        assert!(Yak::new(1.0).is_alive(), "Yak is alive");
-        assert!(!Yak::new(-5.0).is_alive(), "Yak is not alive");
-        assert!(!Yak::new(11.0).is_alive(), "Yak is not alive")
+        assert!(Yak::default(1.0).is_alive(), "Yak is alive");
+        assert!(!Yak::default(-5.0).is_alive(), "Yak is not alive");
+        assert!(!Yak::default(11.0).is_alive(), "Yak is not alive")
     }
     #[test]
     fn can_be_shaved() {
-        assert!(Yak::new(4.0).can_be_shaved(13.0));
-        assert!(Yak::new(4.0).can_be_shaved(0.0));
-        assert!(!Yak::new(4.0).can_be_shaved(5.0));
+        assert!(Yak::default(4.0).can_be_shaved(13.0));
+        assert!(Yak::default(4.0).can_be_shaved(0.0));
+        assert!(!Yak::default(4.0).can_be_shaved(5.0));
     }
     #[test]
     fn yak_milk_production() {
-        assert!(Yak::new(4.0).calculate_milk_production(4.0) == 37.88);
-        assert!(Yak::new(4.0).calculate_milk_production(1.0) == 37.97)
+        assert!(Yak::default(4.0).calculate_milk_production(4.0) == 37.88);
+        assert!(Yak::default(4.0).calculate_milk_production(1.0) == 37.97)
     }
     #[test]
     fn years_to_days() {
-        assert!(Yak::new(4.0).years_to_days(4.0) == 404.0);
-        assert!(Yak::new(2.0).years_to_days(50.0) == 250.0);
+        assert!(Yak::default(4.0).years_to_days(4.0) == 404.0);
+        assert!(Yak::default(2.0).years_to_days(50.0) == 250.0);
     }
     #[test]
     fn days_to_years() {
-        assert!(Yak::new(4.0).days_to_years(4.0) == 4.04);
-        assert!(Yak::new(2.0).days_to_years(50.0) == 2.50);
+        assert!(Yak::default(4.0).days_to_years(4.0) == 4.04);
+        assert!(Yak::default(2.0).days_to_years(50.0) == 2.50);
     }
 }
