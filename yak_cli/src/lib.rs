@@ -49,6 +49,10 @@ impl Yak {
     pub fn sex(&self) -> char {
         self.sex
     }
+
+    pub fn set_age(&mut self, age: u32) {
+        self.age = age;
+    }
 }
 
 pub fn read_xml_content(xml_path: String) -> Herd {
