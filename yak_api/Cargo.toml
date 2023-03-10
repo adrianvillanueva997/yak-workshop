@@ -6,4 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yak = { git = "https://github.com/adrianvillanueva997/yak-workshop", package = "yak", branch="main" }
+tokio = { version = "1.26.0", features = ["full"] }
+actix-web = "4.3.1"
