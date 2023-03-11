@@ -11,9 +11,9 @@ services:
       - POSTGRES_DB=postgres
     volumes:
       - ./postgres:/var/lib/postgresql/data
-    restart: always
+
   redis:
-    image: "redis:7.09-bullseye"
+    image: "redis:7.0.9-bullseye"
     container_name: "yak_redis"
     ports:
       - 6379:6379
