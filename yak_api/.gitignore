@@ -16,3 +16,5 @@ Cargo.lock
 
 infra/postgres/
 infra/redis/
+
+.env
