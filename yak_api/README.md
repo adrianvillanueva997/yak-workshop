@@ -6,4 +6,5 @@ To connect to postgres make sure you have an environment variable named $POSTGRE
 
 ```bash
 export POSTGRES_URL=postgres://postgres:postgres@localhost:5432/postgres
+export REDIS_URL="redis://localhost"
 ```
