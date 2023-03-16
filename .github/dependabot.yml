@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    # Files stored in repository root
+    directory: "./yak"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "cargo"
+    # Files stored in repository root
+    directory: "./yak_api"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: cargo
+    directory: "./yak_cli"
+    schedule:
+      interval: daily
