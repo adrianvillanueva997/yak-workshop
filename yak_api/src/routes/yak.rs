@@ -1,5 +1,6 @@
-use actix_web::{http::Error, web, HttpResponse};
+use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
+use sqlx::{PgPool, Row};
 
 #[derive(Deserialize, Serialize)]
 pub struct YakCreate {
@@ -7,14 +8,15 @@ pub struct YakCreate {
     age: u32,
 }
 
-#[derive(Deserialize)]
-pub struct Info {
-    username: String,
-}
-pub async fn yak(yak: web::Json<YakCreate>) -> HttpResponse {
+pub async fn create_yak(yak: web::Json<YakCreate>) -> HttpResponse {
     HttpResponse::Ok().body("Hello world!")
 }
 
-pub async fn index(info: web::Json<Info>) -> Result<String, Error> {
-    Ok(format!("Welcome {}!", info.username))
+pub async fn get_yaks(pgsql: web::Data<PgPool>) -> impl Responder {
+    let row = sqlx::query("select 1 as id")
+        .fetch_one(pgsql.get_ref())
+        .await
+        .unwrap();
+    let one1: i32 = row.try_get("id").unwrap();
+    format!("{:?}", one1)
 }
