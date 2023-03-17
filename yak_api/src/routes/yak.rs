@@ -2,7 +2,7 @@ use actix_web::{http::Error, web, HttpResponse};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-struct YakRequest {
+pub struct YakCreate {
     name: String,
     age: u32,
 }
@@ -11,7 +11,7 @@ struct YakRequest {
 pub struct Info {
     username: String,
 }
-pub async fn yak() -> HttpResponse {
+pub async fn yak(yak: web::Json<YakCreate>) -> HttpResponse {
     HttpResponse::Ok().body("Hello world!")
 }
 
