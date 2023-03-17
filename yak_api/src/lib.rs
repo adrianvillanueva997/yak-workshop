@@ -13,7 +13,7 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
             .service(
                 web::resource("/yak")
                     .name("name")
-                    .route(web::get().to(yak::yak)),
+                    .route(web::get().to(yak::index)),
             )
             .route("/health", web::get().to(health::health))
             .service(

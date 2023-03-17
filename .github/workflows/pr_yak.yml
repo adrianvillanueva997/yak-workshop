@@ -1,4 +1,4 @@
-name: Build and test yak_api
+name: Build and test yak
 
 on:
   pull_request:
