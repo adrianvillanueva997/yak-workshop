@@ -13,7 +13,9 @@ pub fn run(listener: TcpListener, postgres: PgPool) -> Result<Server, std::io::E
         App::new()
             .service(
                 web::resource("/yak")
-                    .name("name")
+                    .name("yak")
+                    .route(web::put().to(yak::update_yak))
+                    .route(web::delete().to(yak::delete_yak))
                     .route(web::get().to(yak::get_yaks))
                     .route(web::post().to(yak::create_yak)),
             )
