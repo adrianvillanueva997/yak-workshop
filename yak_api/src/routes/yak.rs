@@ -45,7 +45,7 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
 }
 
 pub async fn get_yaks(pgsql: web::Data<PgPool>) -> impl Responder {
-    match sqlx::query_as::<_, Yak>("SELECT id,name,age from yak")
+    match sqlx::query_as::<Postgres, Yak>("SELECT id,name,age from yak")
         .fetch_all(pgsql.get_ref())
         .await
     {
