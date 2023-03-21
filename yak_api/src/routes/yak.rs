@@ -1,11 +1,12 @@
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::{FromRow, PgPool};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, FromRow)]
 pub struct YakCreate {
+    id: i32,
     name: String,
-    age: u32,
+    age: f32,
 }
 
 pub async fn create_yak(yak: web::Json<YakCreate>) -> HttpResponse {
@@ -13,10 +14,11 @@ pub async fn create_yak(yak: web::Json<YakCreate>) -> HttpResponse {
 }
 
 pub async fn get_yaks(pgsql: web::Data<PgPool>) -> impl Responder {
-    let row = sqlx::query("select 1 as id")
-        .fetch_one(pgsql.get_ref())
+    match sqlx::query_as::<_, YakCreate>("SELECT id, name, age FROM yak")
+        .fetch_all(pgsql.get_ref())
         .await
-        .unwrap();
-    let one1: i32 = row.try_get("id").unwrap();
-    format!("{:?}", one1)
+    {
+        Ok(users) => HttpResponse::Ok().json(users),
+        Err(_) => HttpResponse::NotFound().json("No users found"),
+    }
 }
