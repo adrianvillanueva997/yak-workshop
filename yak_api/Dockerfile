@@ -1,5 +1,6 @@
 FROM rust:1.67-bullseye as builder
 WORKDIR /build
+COPY . .
 RUN cargo build --release
 
 FROM debian:11.6-slim as prod
