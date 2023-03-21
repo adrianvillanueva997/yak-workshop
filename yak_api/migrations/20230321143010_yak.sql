@@ -1,0 +1,6 @@
+-- Add migration script here
+CREATE TABLE IF NOT EXISTS YAK (
+    ID SERIAL PRIMARY KEY,
+    NAME VARCHAR(255) NOT NULL,
+    AGE real NOT NULL
+);
