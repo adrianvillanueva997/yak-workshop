@@ -16,11 +16,9 @@ pub struct Yak {
 }
 
 pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> HttpResponse {
-    let query_builder: sqlx::QueryBuilder<Postgres> =
+    let query: sqlx::QueryBuilder<Postgres> =
         sqlx::QueryBuilder::new("INSERT INTO yak (name, age) VALUES ($1, $2)");
-    let sql = query_builder.sql();
-    println!("{sql}");
-    match sqlx::query(&sql)
+    match sqlx::query(&query.sql())
         .bind(&yak.name)
         .bind(&yak.age)
         .execute(pgsql.as_ref())
