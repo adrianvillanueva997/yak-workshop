@@ -1,6 +1,5 @@
 use actix_web::{web, HttpResponse, Responder};
 
-use log::error;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 
@@ -38,7 +37,7 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
     {
         Ok(_) => HttpResponse::Ok().body("OK"),
         Err(err) => {
-            error!("Error: {}", err);
+            log::error!("Error: {}", err);
             HttpResponse::InternalServerError().body("Error creating yak")
         }
     }
@@ -51,7 +50,7 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>) -> impl Responder {
     {
         Ok(users) => HttpResponse::Ok().json(users),
         Err(err) => {
-            error!("Error: {}", err);
+            log::error!("Error: {}", err);
             HttpResponse::NotFound().body("No yaks found")
         }
     }
@@ -66,7 +65,7 @@ pub async fn delete_yak(yak: web::Json<YakDelete>, pgsql: web::Data<PgPool>) -> 
     {
         Ok(_) => HttpResponse::Ok().body("OK"),
         Err(err) => {
-            error!("Error: {}", err);
+            log::error!("Error: {}", err);
             HttpResponse::InternalServerError().body("Error deleting yak")
         }
     }
@@ -84,7 +83,7 @@ pub async fn update_yak(yak: web::Json<YakUpdate>, pgsql: web::Data<PgPool>) -> 
     {
         Ok(_) => HttpResponse::Ok().body("OK"),
         Err(err) => {
-            error!("Error: {}", err);
+            log::error!("Error: {}", err);
             HttpResponse::InternalServerError().body("Error updating yak")
         }
     }
