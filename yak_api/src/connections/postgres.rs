@@ -1,4 +1,6 @@
 use sqlx::{postgres::PgPoolOptions, Error, Pool, Postgres};
+use tracing::instrument;
+#[instrument]
 pub async fn create_pg_pool() -> Result<Pool<Postgres>, Error> {
     let database_url = std::env::var("POSTGRES_URL").expect("POSTGRES_URL must be set");
     let pg_pool = match PgPoolOptions::new()
@@ -7,11 +9,11 @@ pub async fn create_pg_pool() -> Result<Pool<Postgres>, Error> {
         .await
     {
         Ok(pool) => {
-            println!("✅Connection to the database is successful!");
+            tracing::info!("✅Connection to the database is successful!");
             Ok(pool)
         }
         Err(err) => {
-            println!("🔥 Failed to connect to the database: {:?}", err);
+            tracing::error!("🔥 Failed to connect to the database: {:?}", err);
             Err(err)
         }
     };

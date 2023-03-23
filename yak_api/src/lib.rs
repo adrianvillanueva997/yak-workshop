@@ -6,9 +6,11 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use prometheus::HistogramTimer;
 use routes::{health, metrics, yak};
 use sqlx::PgPool;
+use tracing::instrument;
 
 mod routes;
 
+#[instrument]
 pub fn run(listener: TcpListener, postgres: PgPool) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(move || {
         App::new()
