@@ -14,6 +14,7 @@ pub struct Yak {
     id: i32,
     name: String,
     age: f32,
+    age_last_shaved: f32,
 }
 #[derive(Debug, Deserialize, Serialize)]
 pub struct YakDelete {

@@ -3,8 +3,12 @@ infra-up:
 infra-down:
 	docker-compose -f infra/docker-compose.yml down
 hadolint:
-	hadolint --config hadolint.yml Dockerfile
+	hadolint --config .hadolint.yml Dockerfile
 dev:
 	export DATABASE_URL=postgres://postgres:postgres@localhost:5432/yak_api
+	export POSTGRES_URL=postgres://postgres:postgres@localhost:5432/yak_api
+	export REDIS_URL=redis://localhost:6379
 	export
 	cargo run
+migrate:
+	sqlx database drop && sqlx database create && sqlx migrate run
