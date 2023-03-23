@@ -47,6 +47,11 @@ pub fn run(listener: TcpListener, postgres: PgPool) -> Result<Server, std::io::E
                     .route(web::get().to(yak::get_yaks))
                     .route(web::post().to(yak::create_yak)),
             )
+            .service(
+                web::resource("/yak/{id}")
+                    .name("yak_id")
+                    .route(web::get().to(yak::get_yak)),
+            )
             .route("/health", web::get().to(health::health))
             .service(
                 web::resource("/metrics")

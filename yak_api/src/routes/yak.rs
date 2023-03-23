@@ -53,7 +53,7 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>) -> impl Responder {
         .fetch_all(pgsql.get_ref())
         .await
     {
-        Ok(users) => HttpResponse::Ok().json(users),
+        Ok(yaks) => HttpResponse::Ok().json(yaks),
         Err(err) => {
             tracing::error!("Error: {}", err);
             HttpResponse::NotFound().body("No yaks found")
@@ -94,6 +94,24 @@ pub async fn update_yak(yak: web::Json<YakUpdate>, pgsql: web::Data<PgPool>) -> 
         Err(err) => {
             tracing::error!("Error: {}", err);
             HttpResponse::InternalServerError().body("Error updating yak")
+        }
+    }
+}
+
+#[instrument]
+pub async fn get_yak(id: web::Path<i32>, pgsql: web::Data<PgPool>) -> HttpResponse {
+    tracing::info!("Searching yak: {:?}", id);
+    let query: QueryBuilder<Postgres> =
+        QueryBuilder::new("SELECT id,name,age from yak WHERE id = $1");
+    match sqlx::query_as::<Postgres, Yak>(query.sql())
+        .bind(id.as_ref())
+        .fetch_one(pgsql.as_ref())
+        .await
+    {
+        Ok(yak) => HttpResponse::Ok().json(yak),
+        Err(err) => {
+            tracing::error!("Error: {}", err);
+            HttpResponse::InternalServerError().body("Error yak not found")
         }
     }
 }
