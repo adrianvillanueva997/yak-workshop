@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use actix_web::dev::{Server, Service};
+use actix_web::dev::{Server, Service, ServiceRequest};
 use actix_web::web::Data;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use prometheus::HistogramTimer;
@@ -14,7 +14,7 @@ mod routes;
 pub fn run(listener: TcpListener, postgres: PgPool) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(move || {
         App::new()
-            .wrap_fn(|req, srv| {
+            .wrap_fn(|req: ServiceRequest, srv| {
                 let mut histogram_timer: Option<HistogramTimer> = None;
                 let request_path = req.path();
                 let is_registered_resource = req.resource_map().has_resource(request_path);
