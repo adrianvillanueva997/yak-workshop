@@ -4,9 +4,9 @@ export DATABASE_URL=postgres://postgres:postgres@192.168.1.31:5432/yak_api
 export REDIS_URL=redis://192.168.1.31:6379
 
 infra-up:
-	docker-compose -f infra/docker-compose.yml up -d
+	docker compose -f infra/docker-compose.yml up -d
 infra-down:
-	docker-compose -f infra/docker-compose.yml down
+	docker compose -f infra/docker-compose.yml down
 hadolint:
 	hadolint --config .hadolint.yml Dockerfile
 dev:
