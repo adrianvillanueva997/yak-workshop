@@ -4,6 +4,7 @@ use actix_web::dev::{Server, Service, ServiceRequest};
 use actix_web::web::Data;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use prometheus::HistogramTimer;
+use redis::Client;
 use routes::{health, metrics, yak};
 use sqlx::PgPool;
 use tracing::instrument;
@@ -11,7 +12,11 @@ use tracing::instrument;
 mod routes;
 
 #[instrument]
-pub fn run(listener: TcpListener, postgres: PgPool) -> Result<Server, std::io::Error> {
+pub fn run(
+    listener: TcpListener,
+    postgres: PgPool,
+    redis_client: Client,
+) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(move || {
         App::new()
             .wrap_fn(|req: ServiceRequest, srv| {
@@ -58,6 +63,7 @@ pub fn run(listener: TcpListener, postgres: PgPool) -> Result<Server, std::io::E
                     .name("metrics")
                     .route(web::get().to(metrics::metrics)),
             )
+            .app_data(Data::new(redis_client.clone()))
             .app_data(Data::new(postgres.clone()))
             .wrap(Logger::default())
             .wrap(Logger::new("%a %t %s %{User-Agent}i"))

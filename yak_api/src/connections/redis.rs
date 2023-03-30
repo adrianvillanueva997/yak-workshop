@@ -1,12 +1,12 @@
-use redis::{aio::ConnectionManager, Client};
+use redis::Client;
 
 #[tracing::instrument]
-pub async fn redis_connection() -> (Client, ConnectionManager) {
+pub async fn redis_connection() -> Client {
     let client = Client::open(std::env::var("REDIS_URL").expect("Redis URL not set")).unwrap();
     match client.get_tokio_connection_manager().await {
-        Ok(con) => {
+        Ok(_) => {
             tracing::info!("Redis connection established");
-            (client, con)
+            client
         }
         Err(err) => {
             tracing::error!("Redis connection error: {}", err);
