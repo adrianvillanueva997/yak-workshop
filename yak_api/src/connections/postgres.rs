@@ -9,11 +9,11 @@ pub async fn create_pg_pool() -> Result<Pool<Postgres>, Error> {
         .await
     {
         Ok(pool) => {
-            tracing::info!("✅Connection to the database is successful!");
+            tracing::info!("✅ Connection to Postgres is stablished!");
             Ok(pool)
         }
         Err(err) => {
-            tracing::error!("🔥 Failed to connect to the database: {:?}", err);
+            tracing::error!("🔥 Failed to connect to Postgres :( {:?}", err);
             Err(err)
         }
     };

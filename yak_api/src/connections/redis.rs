@@ -5,7 +5,7 @@ pub async fn redis_connection() -> Client {
     let client = Client::open(std::env::var("REDIS_URL").expect("Redis URL not set")).unwrap();
     match client.get_tokio_connection_manager().await {
         Ok(_) => {
-            tracing::info!("Redis connection established");
+            tracing::info!("✅ Connection to Redis is stablished!");
             client
         }
         Err(err) => {

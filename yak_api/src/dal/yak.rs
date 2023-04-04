@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 use tracing::instrument;
 
-// use crate::routes::yak;
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct Yak {
     id: i32,
@@ -109,5 +108,7 @@ pub async fn pgsql_update_yak(
 pub async fn redis_fetch_all_yaks(
     redis: web::Data<redis::Client>,
 ) -> Result<Vec<Yak>, redis::RedisError> {
+    let redis_connection = redis.get_async_connection().await;
+    todo!("Implement redis_fetch_all_yaks");
     unimplemented!()
 }
