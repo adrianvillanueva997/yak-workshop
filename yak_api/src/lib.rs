@@ -9,6 +9,7 @@ use routes::{health, metrics, yak};
 use sqlx::PgPool;
 use tracing::instrument;
 
+mod dal;
 mod routes;
 
 #[instrument]
