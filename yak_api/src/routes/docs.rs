@@ -4,17 +4,21 @@ use utoipa::{
 };
 
 use super::yak;
-
+use crate::models;
 #[derive(OpenApi)]
 #[openapi(
         paths(
             yak::create_yak,
+            yak::get_yaks,
+            yak::delete_yak,
+            yak::update_yak,
+            yak::get_yak
         ),
         components(
-            schemas(yak::YakCreate)
+            schemas(yak::YakCreate, yak::YakDelete, yak::YakUpdate,models::yak::Yak )
         ),
         tags(
-            (name = "todo", description = "Todo management endpoints.")
+            (name = "yak", description = "Yak related operations")
         ),
          modifiers(&SecurityAddon)
 

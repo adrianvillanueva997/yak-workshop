@@ -40,7 +40,7 @@ pub struct YakUpdate {
             content=YakCreate,
             description="Request to create a yak",
             examples(
-                ("YakCreate"= (description="YakCreate example")),
+                ("YakCreate"= (description="{\"name\": \"Yak\", \"age\": 1.0}}")),
 
             )
         ),
@@ -57,11 +57,15 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
     }
 }
 
-#[utoipa::path(get, path = "/yak",
+#[utoipa::path(
+        get,
+        path = "/yak",
         responses(
             (status = 200, description = "Yaks found", body = Vec<Yak>),
             (status = 404, description = "No yaks found")
         ),
+        tag = "Yak"
+
     )]
 #[instrument]
 pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<redis::Client>) -> HttpResponse {
@@ -89,12 +93,15 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<redis::Client>)
 }
 
 /// .
-#[utoipa::path(delete, path = "/yak/",
-        responses(
-            (status = 200, description = "Yak found", body = Yak),
-            (status = 501, description = "No yak found")
-        ),
-    )]
+#[utoipa::path(
+    delete,
+    path = "/yak",
+    responses(
+        (status = 200, description = "Yak found", body = Yak),
+        (status = 501, description = "No yak found")
+    ),
+    tag="Yak"
+)]
 #[instrument]
 pub async fn delete_yak(yak: web::Json<YakDelete>, pgsql: web::Data<PgPool>) -> HttpResponse {
     tracing::info!("Deleting yak: {:?}", yak);
@@ -108,6 +115,24 @@ pub async fn delete_yak(yak: web::Json<YakDelete>, pgsql: web::Data<PgPool>) -> 
 }
 
 /// .
+#[utoipa::path(
+    put,
+    path = "/yak",
+    responses(
+        (status = 200, description = "Yak found", body = Yak),
+        (status = 501, description = "No yak found")
+    ),
+    request_body(
+        content_type="application/json",
+        content=YakUpdate,
+        description="Request to update a yak",
+        examples(
+            ("YakUpdate"= (description="{\"id\": 1, \"name\": \"Yak\", \"age\": 1.0}}")),
+
+        )
+    ),
+    tag="Yak"
+)]
 #[instrument]
 pub async fn update_yak(yak: web::Json<YakUpdate>, pgsql: web::Data<PgPool>) -> HttpResponse {
     tracing::info!("Updating yak: {:?}", yak);
@@ -125,6 +150,15 @@ pub async fn update_yak(yak: web::Json<YakUpdate>, pgsql: web::Data<PgPool>) -> 
 /// # Panics
 ///
 /// Panics if .
+#[utoipa::path(
+    get,
+    path = "/yak/{id}",
+    responses(
+        (status = 200, description = "Yak found", body = Yak),
+        (status = 404, description = "No yak found")
+    ),
+    tag="Yak",
+)]
 #[instrument]
 pub async fn get_yak(
     id: web::Path<i32>,
