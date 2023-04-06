@@ -1,3 +1,4 @@
+pub mod docs;
 pub mod health;
 pub mod herd;
 pub mod metrics;

@@ -1,17 +1,10 @@
 use actix_web::web;
 
 use redis::FromRedisValue;
-use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use tracing::instrument;
 
-#[derive(Deserialize, Serialize, FromRow, Clone, Debug)]
-pub struct Yak {
-    id: i32,
-    name: String,
-    age: f32,
-    age_last_shaved: f32,
-}
+use crate::models::yak::Yak;
 
 impl FromRedisValue for Yak {
     fn from_redis_value(v: &redis::Value) -> redis::RedisResult<Self> {
@@ -177,7 +170,7 @@ pub async fn redis_fetch_yak(
                 .arg(-1)
                 .query_async(&mut connection)
                 .await?;
-            let yak = yaks.iter().find(|y| y.id == id);
+            let yak = yaks.iter().find(|y| y.id() == id);
             match yak {
                 Some(yak) => Ok(yak.clone()),
                 None => Err(redis::RedisError::from((
@@ -203,12 +196,12 @@ pub async fn redis_insert_yak(
         Ok(mut connection) => {
             let yak_json = serde_json::to_string(&yak).unwrap();
             redis::cmd("RPUSH")
-                .arg("yak".to_string() + &yak.id.to_string())
+                .arg("yak".to_string() + &yak.id().to_string())
                 .arg(yak_json)
                 .query_async(&mut connection)
                 .await?;
             redis::cmd("EXPIRE")
-                .arg("yak".to_string() + &yak.id.to_string())
+                .arg("yak".to_string() + &yak.id().to_string())
                 .arg(60)
                 .query_async(&mut connection)
                 .await?;

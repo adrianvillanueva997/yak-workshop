@@ -1,33 +1,50 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web, HttpResponse};
 
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::instrument;
+use utoipa::ToSchema;
 
 use crate::dal::yak::{
     pgsql_create_yak, pgsql_delete_yak, pgsql_fetch_all_yaks, pgsql_fetch_yak,
     redis_fetch_all_yaks, redis_fetch_yak, redis_insert_all_yaks, redis_insert_yak,
 };
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct YakCreate {
     name: String,
     age: f32,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct YakDelete {
     id: i32,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct YakUpdate {
     id: i32,
     name: String,
     age: f32,
 }
 
-/// .
+#[utoipa::path(
+        post,
+        path = "/yak",
+        responses(
+            (status = 200, description = "Yak created succesfully", body = Ok),
+            (status = 501, description = "Yak was not created", body=Err)
+        ),
+        request_body(
+            content_type="application/json",
+            content=YakCreate,
+            description="Request to create a yak",
+            examples(
+                ("YakCreate"= (description="YakCreate example")),
+
+            )
+        ),
+    )]
 #[instrument]
 pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> HttpResponse {
     tracing::info!("Creating yak: {:?}", yak);
@@ -39,13 +56,15 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
         }
     }
 }
-/// .
-///
-/// # Panics
-///
-/// Panics if .
+
+#[utoipa::path(get, path = "/yak",
+        responses(
+            (status = 200, description = "Yaks found", body = Vec<Yak>),
+            (status = 404, description = "No yaks found")
+        ),
+    )]
 #[instrument]
-pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<redis::Client>) -> impl Responder {
+pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<redis::Client>) -> HttpResponse {
     tracing::info!("Getting yaks");
     let yaks = redis_fetch_all_yaks(redis.clone()).await.unwrap();
     if yaks.len() == 0 {
@@ -70,6 +89,12 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<redis::Client>)
 }
 
 /// .
+#[utoipa::path(delete, path = "/yak/",
+        responses(
+            (status = 200, description = "Yak found", body = Yak),
+            (status = 501, description = "No yak found")
+        ),
+    )]
 #[instrument]
 pub async fn delete_yak(yak: web::Json<YakDelete>, pgsql: web::Data<PgPool>) -> HttpResponse {
     tracing::info!("Deleting yak: {:?}", yak);

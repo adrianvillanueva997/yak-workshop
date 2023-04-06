@@ -5,11 +5,15 @@ use actix_web::web::Data;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use prometheus::HistogramTimer;
 use redis::Client;
+use routes::docs::ApiDoc;
 use routes::{health, metrics, yak};
 use sqlx::PgPool;
 use tracing::instrument;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod dal;
+mod models;
 mod routes;
 
 #[instrument]
@@ -18,6 +22,7 @@ pub fn run(
     postgres: PgPool,
     redis_client: Client,
 ) -> Result<Server, std::io::Error> {
+    let openapi = ApiDoc::openapi();
     let server = HttpServer::new(move || {
         App::new()
             .wrap_fn(|req: ServiceRequest, srv| {
@@ -64,6 +69,7 @@ pub fn run(
                     .name("metrics")
                     .route(web::get().to(metrics::metrics)),
             )
+            .service(SwaggerUi::new("/swagger-ui/{_:.*}").url("/docs.json", openapi.clone()))
             .app_data(Data::new(redis_client.clone()))
             .app_data(Data::new(postgres.clone()))
             .wrap(Logger::default())
