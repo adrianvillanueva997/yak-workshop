@@ -1,5 +1,6 @@
 use actix_web::{web, HttpResponse};
 
+use redis::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::instrument;
@@ -68,7 +69,7 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
 
     )]
 #[instrument]
-pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<redis::Client>) -> HttpResponse {
+pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> HttpResponse {
     tracing::info!("Getting yaks");
     let yaks = redis_fetch_all_yaks(redis.clone()).await.unwrap();
     if yaks.len() == 0 {
@@ -163,7 +164,7 @@ pub async fn update_yak(yak: web::Json<YakUpdate>, pgsql: web::Data<PgPool>) -> 
 pub async fn get_yak(
     id: web::Path<i32>,
     pgsql: web::Data<PgPool>,
-    redis: web::Data<redis::Client>,
+    redis: web::Data<Client>,
 ) -> HttpResponse {
     tracing::info!("Searching yak: {:?}", id);
     let id: i32 = id.into_inner();

@@ -6,7 +6,7 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use prometheus::HistogramTimer;
 use redis::Client;
 use routes::docs::ApiDoc;
-use routes::{health, metrics, yak};
+use routes::{health, metrics, stock, yak};
 use sqlx::PgPool;
 use tracing::instrument;
 use utoipa::OpenApi;
@@ -68,6 +68,11 @@ pub fn run(
                 web::resource("/metrics")
                     .name("metrics")
                     .route(web::get().to(metrics::metrics)),
+            )
+            .service(
+                web::resource("/stock/{days}")
+                    .name("stock")
+                    .route(web::get().to(stock::stock)),
             )
             .service(SwaggerUi::new("/swagger-ui/{_:.*}").url("/docs.json", openapi.clone()))
             .app_data(Data::new(redis_client.clone()))
