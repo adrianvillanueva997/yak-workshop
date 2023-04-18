@@ -29,6 +29,11 @@ lazy_static! {
     .expect("Can't create a metric");
 }
 
+/// Get metrics from Prometheus.
+///
+/// # Panics
+///
+/// Panics if the metrics can't be encoded.
 pub async fn metrics() -> HttpResponse {
     let encoder = TextEncoder::new();
     let mut buffer = vec![];

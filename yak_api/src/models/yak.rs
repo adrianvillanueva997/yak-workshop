@@ -11,30 +11,31 @@ pub struct Yak {
 }
 
 impl Yak {
+    /// Returns the id of this [`Yak`].
     pub fn id(&self) -> i32 {
         self.id
     }
-    /// Returns the is alive of this [`Yak`].
+    /// Returns if a [`Yak`] is alive.
     pub fn is_alive(&self) -> bool {
         self.age > 0.0 && self.age < 10.0
     }
 
-    /// .
+    /// Calculates the age of a [`Yak`] in days.
     fn age_to_days(&self, days: f32) -> f32 {
         self.age * 100.0 + days
     }
 
-    /// .
+    /// Calculates the age of a [`Yak`] in years.
     fn days_to_years(&self, days: f32) -> f32 {
         self.age_to_days(days) / 100.0
     }
 
-    /// .
+    /// Calculates the milk production given the age in days of a [`Yak`].
     fn milk(&self, days: f32) -> f32 {
         50.0 - (self.days_to_years(days) * 0.03)
     }
 
-    /// .
+    /// Calculates the total milk and wool production of a [`Yak`] given the number of days.
     pub fn production(&mut self, days: f32) -> (f32, f32) {
         let mut total_milk = 0.0;
         let mut total_wool = 0.0;
@@ -50,7 +51,7 @@ impl Yak {
         (total_milk, total_wool)
     }
 
-    /// .
+    /// Returns if a [`Yak`] can be shaved given the number of days.
     fn can_be_shaved(&mut self, day: f32) -> bool {
         if self.age < 1.0 {
             return false;

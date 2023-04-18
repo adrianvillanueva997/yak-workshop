@@ -29,6 +29,7 @@ pub struct YakUpdate {
     age: f32,
 }
 
+/// Create a new Yak in the database.
 #[utoipa::path(
         post,
         path = "/yak",
@@ -58,6 +59,11 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
     }
 }
 
+/// Gets all yaks from the database.
+///
+/// # Panics
+///
+/// Panics if there are no yaks in the database.
 #[utoipa::path(
         get,
         path = "/yak",
@@ -81,7 +87,7 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> Htt
                         tracing::error!("Error: {}", err);
                     }
                 }
-                HttpResponse::Ok().json(yaks)
+                HttpResponse::Ok().json(*yaks)
             }
             Err(err) => {
                 tracing::error!("Error: {}", err);
@@ -93,7 +99,7 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> Htt
     }
 }
 
-/// .
+/// Deletes a yak from the database.
 #[utoipa::path(
     delete,
     path = "/yak",
@@ -115,7 +121,7 @@ pub async fn delete_yak(yak: web::Json<YakDelete>, pgsql: web::Data<PgPool>) -> 
     }
 }
 
-/// .
+/// Updates a yak in the database.
 #[utoipa::path(
     put,
     path = "/yak",
@@ -146,11 +152,11 @@ pub async fn update_yak(yak: web::Json<YakUpdate>, pgsql: web::Data<PgPool>) -> 
     }
 }
 
-/// .
+/// Gets a single yak from the database.
 ///
 /// # Panics
 ///
-/// Panics if .
+/// Panics if there is no yak with the given id.
 #[utoipa::path(
     get,
     path = "/yak/{id}",

@@ -16,6 +16,11 @@ mod dal;
 mod models;
 mod routes;
 
+/// Starts the Actix HTTP server.
+///
+/// # Errors
+///
+/// This function will return an error if the server fails to start.
 #[instrument]
 pub fn run(
     listener: TcpListener,

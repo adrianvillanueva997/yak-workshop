@@ -7,7 +7,7 @@ use sqlx::PgPool;
 use tracing::instrument;
 use utoipa::ToSchema;
 
-use crate::{dal::yak::pgsql_fetch_all_yaks, models::yak::Yak};
+use crate::dal::yak::pgsql_fetch_all_yaks;
 
 #[derive(Debug, ToSchema, Serialize, Deserialize)]
 pub struct Stock {
@@ -15,6 +15,7 @@ pub struct Stock {
     wool: f32,
 }
 
+/// Get the current stock status after N days.
 #[utoipa::path(
     get,
     path = "/stock/{days}",
@@ -38,8 +39,8 @@ pub async fn stock(
         tracing::error!("Days must be greater than 0");
         return HttpResponse::BadRequest().body("Days must be greater than 0");
     }
-    let yaks: Vec<Yak> = match pgsql_fetch_all_yaks(pgsql).await {
-        Ok(yaks) => yaks,
+    let yaks = match pgsql_fetch_all_yaks(pgsql).await {
+        Ok(yaks) => *yaks,
         Err(err) => {
             tracing::error!("Error: {}", err);
             return HttpResponse::InternalServerError().body("Error getting stock status");
@@ -50,7 +51,7 @@ pub async fn stock(
         wool: 0.0,
     };
     for mut yak in yaks {
-        let (milk, wool) = yak.production(days.clone());
+        let (milk, wool) = yak.production(*days);
         stock.milk += milk;
         stock.wool += wool;
     }

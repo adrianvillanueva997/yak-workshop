@@ -14,13 +14,18 @@ impl FromRedisValue for Yak {
     }
 }
 
+/// Fetches all yaks from Postgres database.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
-pub async fn pgsql_fetch_all_yaks(pgsql: web::Data<PgPool>) -> Result<Vec<Yak>, sqlx::Error> {
+pub async fn pgsql_fetch_all_yaks(pgsql: web::Data<PgPool>) -> Result<Box<Vec<Yak>>, sqlx::Error> {
     match sqlx::query_as::<Postgres, Yak>("SELECT id,name,age, age_last_shaved from yak")
         .fetch_all(pgsql.get_ref())
         .await
     {
-        Ok(yaks) => Ok(yaks),
+        Ok(yaks) => Ok(Box::new(yaks)),
         Err(err) => {
             tracing::error!("Error: {}", err);
             Err(err)
@@ -28,6 +33,11 @@ pub async fn pgsql_fetch_all_yaks(pgsql: web::Data<PgPool>) -> Result<Vec<Yak>, 
     }
 }
 
+/// Fetches a yak from Postgres database.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn pgsql_fetch_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<Yak, sqlx::Error> {
     let query: QueryBuilder<Postgres> =
@@ -45,6 +55,11 @@ pub async fn pgsql_fetch_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<Yak, s
     }
 }
 
+/// Creates a new yak in the Postgres database.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn pgsql_create_yak(
     pgsql: web::Data<PgPool>,
@@ -67,6 +82,11 @@ pub async fn pgsql_create_yak(
     }
 }
 
+/// Deletes a yak from the Postgres database.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn pgsql_delete_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<(), sqlx::Error> {
     let query: QueryBuilder<Postgres> = QueryBuilder::new("DELETE FROM yak WHERE id = $1");
@@ -83,6 +103,11 @@ pub async fn pgsql_delete_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<(), s
     }
 }
 
+/// Updates a yak in the Postgres database.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn pgsql_update_yak(
     pgsql: web::Data<PgPool>,
@@ -106,10 +131,15 @@ pub async fn pgsql_update_yak(
         }
     }
 }
+/// Fetches all yaks from Redis database.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn redis_fetch_all_yaks(
     redis: web::Data<redis::Client>,
-) -> Result<Vec<Yak>, redis::RedisError> {
+) -> Result<Box<Vec<Yak>>, redis::RedisError> {
     let redis_connection = redis.get_async_connection().await;
     match redis_connection {
         Ok(mut connection) => {
@@ -119,7 +149,7 @@ pub async fn redis_fetch_all_yaks(
                 .arg(-1)
                 .query_async(&mut connection)
                 .await?;
-            Ok(yaks)
+            Ok(Box::new(yaks))
         }
         Err(err) => {
             tracing::error!("Error: {}", err);
@@ -127,15 +157,24 @@ pub async fn redis_fetch_all_yaks(
         }
     }
 }
+/// Inserts all yaks into Redis database.
+///
+/// # Panics
+///
+/// Panics if the Redis connection fails.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn redis_insert_all_yaks(
     redis: web::Data<redis::Client>,
-    yaks: Vec<Yak>,
+    yaks: Box<Vec<Yak>>,
 ) -> Result<(), redis::RedisError> {
     let redis_connection = redis.get_async_connection().await;
     match redis_connection {
         Ok(mut connection) => {
-            for yak in yaks {
+            for yak in *yaks {
                 let yak_json = serde_json::to_string(&yak).unwrap();
                 redis::cmd("RPUSH")
                     .arg("yaks")
@@ -156,6 +195,11 @@ pub async fn redis_insert_all_yaks(
         }
     }
 }
+/// Fetches a yak from Redis database.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn redis_fetch_yak(
     redis: web::Data<redis::Client>,
@@ -186,6 +230,15 @@ pub async fn redis_fetch_yak(
     }
 }
 
+/// Inserts a yak into Redis database.
+///
+/// # Panics
+///
+/// Panics if the Redis connection fails.
+///
+/// # Errors
+///
+/// This function will return an error if the database query fails.
 #[instrument]
 pub async fn redis_insert_yak(
     redis: web::Data<redis::Client>,

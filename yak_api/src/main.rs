@@ -1,6 +1,15 @@
 use std::net::TcpListener;
 mod connections;
 
+/// Main function.
+///
+/// # Panics
+///
+/// Panics if the server fails to start or if the Postgres connection fails or if the Redis connection fails.
+///
+/// # Errors
+///
+/// This function will return an error if the server fails to start.
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
