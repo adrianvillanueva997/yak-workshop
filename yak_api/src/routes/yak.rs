@@ -87,7 +87,7 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> Htt
                         tracing::error!("Error: {}", err);
                     }
                 }
-                HttpResponse::Ok().json(*yaks)
+                HttpResponse::Ok().json(yaks)
             }
             Err(err) => {
                 tracing::error!("Error: {}", err);

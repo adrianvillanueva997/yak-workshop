@@ -39,7 +39,7 @@ pub async fn pgsql_fetch_all_yaks(pgsql: web::Data<PgPool>) -> Result<Box<Vec<Ya
 ///
 /// This function will return an error if the database query fails.
 #[instrument]
-pub async fn pgsql_fetch_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<Yak, sqlx::Error> {
+pub async fn pgsql_fetch_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<Box<Yak>, sqlx::Error> {
     let query: QueryBuilder<Postgres> =
         QueryBuilder::new("SELECT id,name,age, age_last_shaved from yak WHERE id = $1");
     match sqlx::query_as::<Postgres, Yak>(query.sql())
@@ -47,7 +47,7 @@ pub async fn pgsql_fetch_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<Yak, s
         .fetch_one(pgsql.as_ref())
         .await
     {
-        Ok(yak) => Ok(yak),
+        Ok(yak) => Ok(Box::new(yak)),
         Err(err) => {
             tracing::error!("Error: {}", err);
             Err(err)
@@ -204,7 +204,7 @@ pub async fn redis_insert_all_yaks(
 pub async fn redis_fetch_yak(
     redis: web::Data<redis::Client>,
     id: i32,
-) -> Result<Yak, redis::RedisError> {
+) -> Result<Box<Yak>, redis::RedisError> {
     let redis_connection = redis.get_async_connection().await;
     match redis_connection {
         Ok(mut connection) => {
@@ -216,7 +216,7 @@ pub async fn redis_fetch_yak(
                 .await?;
             let yak = yaks.iter().find(|y| y.id() == id);
             match yak {
-                Some(yak) => Ok(yak.clone()),
+                Some(yak) => Ok(Box::new(yak.clone())),
                 None => Err(redis::RedisError::from((
                     redis::ErrorKind::TypeError,
                     "Yak not found",
@@ -242,8 +242,8 @@ pub async fn redis_fetch_yak(
 #[instrument]
 pub async fn redis_insert_yak(
     redis: web::Data<redis::Client>,
-    yak: Yak,
-) -> Result<Yak, redis::RedisError> {
+    yak: Box<Yak>,
+) -> Result<Box<Yak>, redis::RedisError> {
     let redis_connection = redis.get_async_connection().await;
     match redis_connection {
         Ok(mut connection) => {
