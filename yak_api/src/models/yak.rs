@@ -68,8 +68,4 @@ impl Yak {
     fn set_age_last_shaved(&mut self, age_last_shaved: f32) {
         self.age_last_shaved = age_last_shaved;
     }
-
-    pub fn set_age(&mut self, age: f32) {
-        self.age = age;
-    }
 }
