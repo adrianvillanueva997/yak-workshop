@@ -26,7 +26,7 @@ impl Yak {
     }
 
     /// Calculates the age of a [`Yak`] in years.
-    fn days_to_years(&self, days: f32) -> f32 {
+    pub fn days_to_years(&self, days: f32) -> f32 {
         self.age_to_days(days) / 100.0
     }
 
@@ -67,5 +67,9 @@ impl Yak {
     /// Sets the age last shaved of this [`Yak`].
     fn set_age_last_shaved(&mut self, age_last_shaved: f32) {
         self.age_last_shaved = age_last_shaved;
+    }
+
+    pub fn set_age(&mut self, age: f32) {
+        self.age = age;
     }
 }

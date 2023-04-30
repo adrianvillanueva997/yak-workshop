@@ -6,7 +6,7 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use prometheus::HistogramTimer;
 use redis::Client;
 use routes::docs::ApiDoc;
-use routes::{health, metrics, stock, yak};
+use routes::{health, herd, metrics, stock, yak};
 use sqlx::PgPool;
 use tracing::instrument;
 use utoipa::OpenApi;
@@ -62,6 +62,11 @@ pub fn run(
                     .route(web::delete().to(yak::delete_yak))
                     .route(web::get().to(yak::get_yaks))
                     .route(web::post().to(yak::create_yak)),
+            )
+            .service(
+                web::resource("/herd/{days}")
+                    .name("herd")
+                    .route(web::get().to(herd::herd)),
             )
             .service(
                 web::resource("/yak/{id}")
