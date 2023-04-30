@@ -7,7 +7,7 @@ use tracing::instrument;
 use utoipa::ToSchema;
 
 use crate::dal::yak::{
-    pgsql_create_yak, pgsql_delete_yak, pgsql_fetch_all_yaks, pgsql_fetch_yak,
+    pgsql_create_yak, pgsql_delete_yak, pgsql_fetch_all_yaks, pgsql_fetch_yak, pgsql_update_yak,
     redis_fetch_all_yaks, redis_fetch_yak, redis_insert_all_yaks, redis_insert_yak,
 };
 
@@ -50,13 +50,11 @@ pub struct YakUpdate {
 #[instrument]
 pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> HttpResponse {
     tracing::info!("Creating yak: {:?}", yak);
-    match pgsql_create_yak(pgsql, yak.name.to_string(), yak.age).await {
-        Ok(_) => HttpResponse::Ok().body("OK"),
-        Err(err) => {
-            tracing::error!("Error: {}", err);
-            HttpResponse::InternalServerError().body("Error creating yak")
-        }
+    if let Err(err) = pgsql_create_yak(pgsql.clone(), yak.name.to_string(), yak.age).await {
+        tracing::error!("Error: {}", err);
+        return HttpResponse::InternalServerError().body("Error creating yak");
     }
+    HttpResponse::Ok().body("OK")
 }
 
 /// Gets all yaks from the database.
@@ -77,26 +75,23 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
 #[instrument]
 pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> HttpResponse {
     tracing::info!("Getting yaks");
-    let yaks = redis_fetch_all_yaks(redis.clone()).await.unwrap();
-    if yaks.len() == 0 {
-        match pgsql_fetch_all_yaks(pgsql).await {
-            Ok(yaks) => {
-                match redis_insert_all_yaks(redis, yaks.clone()).await {
-                    Ok(_) => (),
-                    Err(err) => {
-                        tracing::error!("Error: {}", err);
-                    }
+    let yaks = match redis_fetch_all_yaks(redis.clone()).await {
+        Ok(yaks) if !yaks.is_empty() => yaks,
+        _ => {
+            let yaks = match pgsql_fetch_all_yaks(pgsql.clone()).await {
+                Ok(yaks) => yaks,
+                Err(err) => {
+                    tracing::error!("Error: {}", err);
+                    return HttpResponse::NotFound().body("No yaks found");
                 }
-                HttpResponse::Ok().json(yaks)
-            }
-            Err(err) => {
+            };
+            if let Err(err) = redis_insert_all_yaks(redis, yaks.clone()).await {
                 tracing::error!("Error: {}", err);
-                HttpResponse::NotFound().body("No yaks found")
             }
+            yaks
         }
-    } else {
-        HttpResponse::Ok().json(yaks)
-    }
+    };
+    HttpResponse::Ok().json(yaks)
 }
 
 /// Deletes a yak from the database.
@@ -112,13 +107,14 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> Htt
 #[instrument]
 pub async fn delete_yak(yak: web::Json<YakDelete>, pgsql: web::Data<PgPool>) -> HttpResponse {
     tracing::info!("Deleting yak: {:?}", yak);
-    match pgsql_delete_yak(pgsql, yak.id).await {
-        Ok(_) => HttpResponse::Ok().body("OK"),
+    match pgsql_delete_yak(pgsql.clone(), yak.id).await {
+        Ok(_) => (),
         Err(err) => {
             tracing::error!("Error: {}", err);
-            HttpResponse::InternalServerError().body("Error deleting yak")
+            return HttpResponse::InternalServerError().body("Error deleting yak");
         }
-    }
+    };
+    HttpResponse::Ok().body("OK")
 }
 
 /// Updates a yak in the database.
@@ -142,11 +138,14 @@ pub async fn delete_yak(yak: web::Json<YakDelete>, pgsql: web::Data<PgPool>) -> 
 )]
 #[instrument]
 pub async fn update_yak(yak: web::Json<YakUpdate>, pgsql: web::Data<PgPool>) -> HttpResponse {
-    tracing::info!("Updating yak: {:?}", yak);
-    match pgsql_create_yak(pgsql, yak.name.to_string(), yak.age).await {
-        Ok(_) => HttpResponse::Ok().body("OK"),
+    let result = pgsql_update_yak(pgsql, yak.id, yak.name.to_string(), yak.age).await;
+    match result {
+        Ok(_) => {
+            tracing::info!("Yak updated: {:?}", yak);
+            HttpResponse::Ok().body("OK")
+        }
         Err(err) => {
-            tracing::error!("Error: {}", err);
+            tracing::error!("Error updating yak: {}", err);
             HttpResponse::InternalServerError().body("Error updating yak")
         }
     }
@@ -174,21 +173,25 @@ pub async fn get_yak(
 ) -> HttpResponse {
     tracing::info!("Searching yak: {:?}", id);
     let id: i32 = id.into_inner();
+
+    // First, try to fetch the yak from Redis
     match redis_fetch_yak(redis.clone(), id).await {
         Ok(yak) => HttpResponse::Ok().json(yak),
-        Err(err) => {
-            tracing::error!("Error: {}", err);
-            match pgsql_fetch_yak(pgsql, id).await {
+        Err(_) => {
+            // If it's not found in Redis, fetch it from Postgres
+            match pgsql_fetch_yak(pgsql.clone(), id).await {
                 Ok(yak) => {
-                    redis_insert_yak(redis, yak.clone()).await.unwrap();
-                    HttpResponse::Ok().json(yak);
+                    // Cache the yak in Redis
+                    if let Err(err) = redis_insert_yak(redis.clone(), yak.clone()).await {
+                        tracing::error!("Error: {}", err);
+                    }
+                    HttpResponse::Ok().json(yak)
                 }
                 Err(err) => {
                     tracing::error!("Error: {}", err);
-                    HttpResponse::NotFound().body("No yak found");
+                    HttpResponse::NotFound().body("No yak found")
                 }
             }
-            HttpResponse::NotFound().body("No yak found")
         }
     }
 }

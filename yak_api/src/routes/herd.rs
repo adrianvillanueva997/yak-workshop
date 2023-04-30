@@ -21,13 +21,12 @@ pub async fn herd(
     if yaks.len() == 0 {
         yaks = dal::yak::pgsql_fetch_all_yaks(pgsql).await.unwrap();
     }
-    yaks.retain(|yak| {
-        let new_age = yak.days_to_years(*days as f32);
-        if new_age <= 10.0 {
-            true
-        } else {
-            false
-        }
-    });
-    HttpResponse::Ok().json(yaks)
+    if yaks.is_empty() {
+        return HttpResponse::NotFound().body("No yaks found");
+    }
+    let filtered_yaks = yaks
+        .into_iter()
+        .filter(|yak| yak.days_to_years(*days as f32) <= 10.0)
+        .collect::<Vec<_>>();
+    HttpResponse::Ok().json(filtered_yaks)
 }
