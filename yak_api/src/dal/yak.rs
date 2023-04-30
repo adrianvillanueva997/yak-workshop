@@ -66,8 +66,8 @@ pub async fn pgsql_create_yak(
     name: String,
     age: f32,
 ) -> Result<(), sqlx::Error> {
-    let query: QueryBuilder<Postgres> =
-        QueryBuilder::new("INSERT INTO yak (name, age) VALUES ($1, $2)");
+    static SQL: &str = "INSERT INTO yak (name, age) VALUES ($1, $2)";
+    let query: QueryBuilder<Postgres> = QueryBuilder::new(SQL);
     match sqlx::query(&query.sql())
         .bind(name)
         .bind(age)
@@ -89,7 +89,8 @@ pub async fn pgsql_create_yak(
 /// This function will return an error if the database query fails.
 #[instrument]
 pub async fn pgsql_delete_yak(pgsql: web::Data<PgPool>, id: i32) -> Result<(), sqlx::Error> {
-    let query: QueryBuilder<Postgres> = QueryBuilder::new("DELETE FROM yak WHERE id = $1");
+    static SQL: &str = "DELETE FROM yak WHERE id = $1";
+    let query: QueryBuilder<Postgres> = QueryBuilder::new(SQL);
     match sqlx::query(query.sql())
         .bind(id)
         .execute(pgsql.as_ref())
@@ -115,8 +116,8 @@ pub async fn pgsql_update_yak(
     name: String,
     age: f32,
 ) -> Result<(), sqlx::Error> {
-    let query: QueryBuilder<Postgres> =
-        QueryBuilder::new("UPDATE yak SET age = $1, name = $2 WHERE id = $3");
+    static SQL: &str = "UPDATE yak SET age = $1, name = $2 WHERE id = $3";
+    let query: QueryBuilder<Postgres> = QueryBuilder::new(SQL);
     match sqlx::query(query.sql())
         .bind(age)
         .bind(name)
@@ -140,22 +141,13 @@ pub async fn pgsql_update_yak(
 pub async fn redis_fetch_all_yaks(
     redis: web::Data<redis::Client>,
 ) -> Result<Box<Vec<Yak>>, redis::RedisError> {
-    let redis_connection = redis.get_async_connection().await;
-    match redis_connection {
-        Ok(mut connection) => {
-            let yaks: Vec<Yak> = redis::cmd("LRANGE")
-                .arg("yaks")
-                .arg(0)
-                .arg(-1)
-                .query_async(&mut connection)
-                .await?;
-            Ok(Box::new(yaks))
-        }
-        Err(err) => {
-            tracing::error!("Error: {}", err);
-            Err(err)
-        }
-    }
+    let mut connection = redis.get_connection()?;
+    let yaks: Vec<Yak> = redis::cmd("LRANGE")
+        .arg("yaks")
+        .arg(0)
+        .arg(-1)
+        .query(&mut connection)?;
+    Ok(Box::new(yaks))
 }
 /// Inserts all yaks into Redis database.
 ///
@@ -208,15 +200,17 @@ pub async fn redis_fetch_yak(
     let redis_connection = redis.get_async_connection().await;
     match redis_connection {
         Ok(mut connection) => {
-            let yaks: Vec<Yak> = redis::cmd("LRANGE")
+            let yak_json: Option<String> = redis::cmd("LINDEX")
                 .arg("yaks")
-                .arg(0)
-                .arg(-1)
+                .arg(id)
                 .query_async(&mut connection)
                 .await?;
-            let yak = yaks.iter().find(|y| y.id() == id);
-            match yak {
-                Some(yak) => Ok(Box::new(yak.clone())),
+
+            match yak_json {
+                Some(json) => {
+                    let yak: Yak = serde_json::from_str(&json).unwrap();
+                    Ok(Box::new(yak))
+                }
                 None => Err(redis::RedisError::from((
                     redis::ErrorKind::TypeError,
                     "Yak not found",
