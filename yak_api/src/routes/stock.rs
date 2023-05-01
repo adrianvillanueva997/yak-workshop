@@ -35,7 +35,7 @@ pub async fn stock(
     redis: web::Data<Client>,
 ) -> HttpResponse {
     tracing::info!("Getting stock status after {} days", days);
-    if days.clone() < 0.0 {
+    if *days < 0.0 {
         tracing::error!("Days must be greater than 0");
         return HttpResponse::BadRequest().body("Days must be greater than 0");
     }

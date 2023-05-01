@@ -61,7 +61,7 @@ impl Yak {
             self.set_age_last_shaved(self.days_to_years(day));
             return true;
         }
-        return false;
+        false
     }
 
     /// Sets the age last shaved of this [`Yak`].

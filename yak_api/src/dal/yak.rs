@@ -68,7 +68,7 @@ pub async fn pgsql_create_yak(
 ) -> Result<(), sqlx::Error> {
     static SQL: &str = "INSERT INTO yak (name, age) VALUES ($1, $2)";
     let query: QueryBuilder<Postgres> = QueryBuilder::new(SQL);
-    match sqlx::query(&query.sql())
+    match sqlx::query(query.sql())
         .bind(name)
         .bind(age)
         .execute(pgsql.as_ref())
@@ -161,12 +161,12 @@ pub async fn redis_fetch_all_yaks(
 #[instrument]
 pub async fn redis_insert_all_yaks(
     redis: web::Data<redis::Client>,
-    yaks: Box<Vec<Yak>>,
+    yaks: Vec<Yak>,
 ) -> Result<(), redis::RedisError> {
     let redis_connection = redis.get_async_connection().await;
     match redis_connection {
         Ok(mut connection) => {
-            for yak in *yaks {
+            for yak in yaks {
                 let yak_json = serde_json::to_string(&yak).unwrap();
                 redis::cmd("RPUSH")
                     .arg("yaks")

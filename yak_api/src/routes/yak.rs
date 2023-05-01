@@ -85,7 +85,7 @@ pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> Htt
                     return HttpResponse::NotFound().body("No yaks found");
                 }
             };
-            if let Err(err) = redis_insert_all_yaks(redis, yaks.clone()).await {
+            if let Err(err) = redis_insert_all_yaks(redis, *yaks.clone()).await {
                 tracing::error!("Error: {}", err);
             }
             yaks
