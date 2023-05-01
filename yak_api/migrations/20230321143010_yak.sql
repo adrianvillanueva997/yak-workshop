@@ -1,16 +1,21 @@
--- Add migration script here
-CREATE TABLE IF NOT EXISTS YAK (
-    ID SERIAL PRIMARY KEY,
-    NAME VARCHAR(255) NOT NULL,
-    AGE real NOT NULL,
-    AGE_LAST_SHAVED real
+-- Create the YAK table
+CREATE TABLE IF NOT EXISTS yak (
+    id serial PRIMARY KEY,
+    name varchar(255) NOT NULL,
+    age real NOT NULL,
+    age_last_shaved real DEFAULT 0 -- Age since last shaved in days
 );
-alter table YAK alter column AGE_LAST_SHAVED set default 0;
 
-INSERT INTO YAK (NAME, AGE, AGE_LAST_SHAVED) VALUES ('Betty', 5, 0);
-INSERT INTO YAK (NAME, AGE, AGE_LAST_SHAVED) VALUES ('Betsy', 2, 0);
-INSERT INTO YAK (NAME, AGE, AGE_LAST_SHAVED) VALUES ('Tommy', 3, 0);
-INSERT INTO YAK (NAME, AGE, AGE_LAST_SHAVED) VALUES ('YakYak-binks', 6, 0);
-INSERT INTO YAK (NAME, AGE, AGE_LAST_SHAVED) VALUES ('SOmething', 2, 0);
-INSERT INTO YAK (NAME, AGE, AGE_LAST_SHAVED) VALUES ('SomethingElse', 1, 0);
+-- Insert initial data into the YAK table
+INSERT INTO yak (name, age, age_last_shaved)
+VALUES
+    ('Betty', 5, 0),
+    ('Betsy', 2, 0),
+    ('Tommy', 3, 0),
+    ('YakYak-binks', 6, 0),
+    ('SOmething', 2, 0),
+    ('SomethingElse', 1, 0);
 
+-- Set default value for AGE_LAST_SHAVED column
+ALTER TABLE yak
+ALTER COLUMN age_last_shaved SET DEFAULT 0;
