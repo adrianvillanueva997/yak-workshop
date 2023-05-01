@@ -6,16 +6,16 @@ use redis::Client;
 ///
 /// Panics if the REDIS_URL environment variable is not set.
 #[tracing::instrument]
-pub async fn redis_connection() -> Client {
-    let client = Client::open(std::env::var("REDIS_URL").expect("Redis URL not set")).unwrap();
+pub async fn redis_connection() -> Result<Client, Box<dyn std::error::Error + Send + Sync>> {
+    let client = Client::open(std::env::var("REDIS_URL").expect("Redis URL not set"))?;
     match client.get_tokio_connection_manager().await {
         Ok(_) => {
             tracing::info!("✅ Connection to Redis is stablished!");
-            client
+            Ok(client)
         }
         Err(err) => {
             tracing::error!("Redis connection error: {}", err);
-            panic!("Redis connection error: {}", err);
+            Err(err.into())
         }
     }
 }

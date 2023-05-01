@@ -17,6 +17,8 @@ async fn main() -> std::io::Result<()> {
     let pgpool = connections::postgres::create_pg_pool()
         .await
         .expect("Failed to connect to Postgres");
-    let redis_client = connections::redis::redis_connection().await;
+    let redis_client = connections::redis::redis_connection()
+        .await
+        .expect("Failed to connect to Redis");
     yak_api::run(listener, pgpool, redis_client)?.await
 }

@@ -12,19 +12,9 @@ use tracing::instrument;
 #[instrument]
 pub async fn create_pg_pool() -> Result<Pool<Postgres>, Error> {
     let database_url = std::env::var("POSTGRES_URL").expect("POSTGRES_URL must be set");
-    let pg_pool = match PgPoolOptions::new()
+    let pg_pool: Pool<Postgres> = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
-        .await
-    {
-        Ok(pool) => {
-            tracing::info!("✅ Connection to Postgres is stablished!");
-            Ok(pool)
-        }
-        Err(err) => {
-            tracing::error!("🔥 Failed to connect to Postgres :( {:?}", err);
-            Err(err)
-        }
-    };
-    pg_pool
+        .await?;
+    Ok(pg_pool)
 }
