@@ -27,8 +27,10 @@ pub fn run(
     postgres: PgPool,
     redis_client: Client,
 ) -> Result<Server, std::io::Error> {
-    let openapi = ApiDoc::openapi();
     let server = HttpServer::new(move || {
+        let openapi = ApiDoc::openapi();
+        let postgres = postgres.clone();
+        let redis_client = redis_client.clone();
         App::new()
             .wrap_fn(|req: ServiceRequest, srv| {
                 let mut histogram_timer: Option<HistogramTimer> = None;
@@ -84,9 +86,9 @@ pub fn run(
                     .name("stock")
                     .route(web::get().to(stock::stock)),
             )
-            .service(SwaggerUi::new("/swagger-ui/{_:.*}").url("/docs.json", openapi.clone()))
-            .app_data(Data::new(redis_client.clone()))
-            .app_data(Data::new(postgres.clone()))
+            .service(SwaggerUi::new("/swagger-ui/{_:.*}").url("/docs.json", openapi))
+            .app_data(Data::new(redis_client))
+            .app_data(Data::new(postgres))
             .wrap(Logger::default())
             .wrap(Logger::new("%a %t %s %{User-Agent}i"))
     })
