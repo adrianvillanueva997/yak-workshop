@@ -1,5 +1,5 @@
 # Build stage
-FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+FROM lukemathwalker/cargo-chef:0.1.59-rust-slim-buster AS chef
 WORKDIR /app
 
 FROM chef AS planner
@@ -15,7 +15,7 @@ COPY . .
 RUN cargo build --release --bin app
 
 # Runtime stage
-FROM alpine:latest AS runtime
+FROM alpine:3.17.3 AS runtime
 WORKDIR /app
 RUN apk --no-cache --no-progress --update add ca-certificates
 COPY --from=builder --chown=nobody:nogroup /app/target/release/yak_api /usr/local/bin/app
