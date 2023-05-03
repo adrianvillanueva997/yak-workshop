@@ -1,15 +1,24 @@
 # Build stage
-FROM rust:1.67-bullseye AS builder
-WORKDIR /build
-COPY . .
-RUN cargo install cargo-chef
-RUN cargo chef prepare --recipe-path recipe.json
-RUN --mount=type=cache,target=/build/target cargo chef cook --release --recipe-path recipe.json
-RUN --mount=type=cache,target=/build/target cargo build --release
-
-# Final stage
-FROM debian:buster-slim AS prod
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 WORKDIR /app
-COPY --from=builder /build/target/release/yak_api .
+
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+# Build dependencies - this is the caching Docker layer!
+RUN cargo chef cook --release --recipe-path recipe.json
+# Build application
+COPY . .
+RUN cargo build --release --bin app
+
+# Runtime stage
+FROM alpine:latest AS runtime
+WORKDIR /app
+RUN apk --no-cache --no-progress --update add ca-certificates
+COPY --from=builder --chown=nobody:nogroup /app/target/release/yak_api /usr/local/bin/app
 EXPOSE 8080
-CMD ["./yak_api"]
+USER nobody:nogroup
+ENTRYPOINT ["/usr/local/bin/app"]
