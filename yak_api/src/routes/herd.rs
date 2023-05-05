@@ -17,13 +17,7 @@ pub async fn herd(
     pgsql: web::Data<PgPool>,
     redis: web::Data<Client>,
 ) -> HttpResponse {
-    let mut yaks = dal::yak::redis_fetch_all_yaks(redis.clone()).await.unwrap();
-    if yaks.len() == 0 {
-        yaks = dal::yak::pgsql_fetch_all_yaks(pgsql).await.unwrap();
-    }
-    if yaks.is_empty() {
-        return HttpResponse::NotFound().body("No yaks found");
-    }
+    let yaks = dal::yak::fetch_yaks(&redis, &pgsql).await.unwrap();
     let filtered_yaks = yaks
         .into_iter()
         .filter(|yak| yak.days_to_years(*days as f32) <= 10.0)

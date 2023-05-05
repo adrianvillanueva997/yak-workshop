@@ -7,8 +7,7 @@ use tracing::instrument;
 use utoipa::ToSchema;
 
 use crate::dal::yak::{
-    pgsql_create_yak, pgsql_delete_yak, pgsql_fetch_all_yaks, pgsql_fetch_yak, pgsql_update_yak,
-    redis_fetch_all_yaks, redis_fetch_yak, redis_insert_all_yaks, redis_insert_yak,
+    fetch_yak, fetch_yaks, pgsql_create_yak, pgsql_delete_yak, pgsql_update_yak,
 };
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
@@ -75,23 +74,10 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
 #[instrument]
 pub async fn get_yaks(pgsql: web::Data<PgPool>, redis: web::Data<Client>) -> HttpResponse {
     tracing::info!("Getting yaks");
-    let yaks = match redis_fetch_all_yaks(redis.clone()).await {
-        Ok(yaks) if !yaks.is_empty() => yaks,
-        _ => {
-            let yaks = match pgsql_fetch_all_yaks(pgsql.clone()).await {
-                Ok(yaks) => yaks,
-                Err(err) => {
-                    tracing::error!("Error: {}", err);
-                    return HttpResponse::NotFound().body("No yaks found");
-                }
-            };
-            if let Err(err) = redis_insert_all_yaks(redis, *yaks.clone()).await {
-                tracing::error!("Error: {}", err);
-            }
-            yaks
-        }
-    };
-    HttpResponse::Ok().json(yaks)
+    match fetch_yaks(&redis, &pgsql).await {
+        Ok(yaks) => HttpResponse::Ok().json(yaks),
+        Err(_) => HttpResponse::InternalServerError().body("Error getting yaks"),
+    }
 }
 
 /// Deletes a yak from the database.
@@ -173,25 +159,11 @@ pub async fn get_yak(
 ) -> HttpResponse {
     tracing::info!("Searching yak: {:?}", id);
     let id: i32 = id.into_inner();
-
-    // First, try to fetch the yak from Redis
-    match redis_fetch_yak(redis.clone(), id).await {
-        Ok(yak) => HttpResponse::Ok().json(yak),
-        Err(_) => {
-            // If it's not found in Redis, fetch it from Postgres
-            match pgsql_fetch_yak(pgsql.clone(), id).await {
-                Ok(yak) => {
-                    // Cache the yak in Redis
-                    if let Err(err) = redis_insert_yak(redis.clone(), yak.clone()).await {
-                        tracing::error!("Error: {}", err);
-                    }
-                    HttpResponse::Ok().json(yak)
-                }
-                Err(err) => {
-                    tracing::error!("Error: {}", err);
-                    HttpResponse::NotFound().body("No yak found")
-                }
-            }
+    match fetch_yak(redis.clone(), pgsql.clone(), id).await {
+        Ok(yak) => {
+            tracing::info!("Yak found: {:?}", yak);
+            HttpResponse::Ok().json(yak)
         }
+        Err(_) => HttpResponse::InternalServerError().body("Error getting yak"),
     }
 }

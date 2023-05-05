@@ -1,6 +1,6 @@
-use actix_web::web;
+use actix_web::{web, HttpResponse};
 
-use redis::FromRedisValue;
+use redis::{Client, FromRedisValue};
 use sqlx::{PgPool, Postgres, QueryBuilder};
 use tracing::instrument;
 
@@ -20,7 +20,7 @@ impl FromRedisValue for Yak {
 ///
 /// This function will return an error if the database query fails.
 #[instrument]
-pub async fn pgsql_fetch_all_yaks(pgsql: web::Data<PgPool>) -> Result<Box<Vec<Yak>>, sqlx::Error> {
+async fn pgsql_fetch_all_yaks(pgsql: web::Data<PgPool>) -> Result<Box<Vec<Yak>>, sqlx::Error> {
     match sqlx::query_as::<Postgres, Yak>("SELECT id,name,age, age_last_shaved from yak")
         .fetch_all(pgsql.get_ref())
         .await
@@ -138,7 +138,7 @@ pub async fn pgsql_update_yak(
 ///
 /// This function will return an error if the database query fails.
 #[instrument]
-pub async fn redis_fetch_all_yaks(
+async fn redis_fetch_all_yaks(
     redis: web::Data<redis::Client>,
 ) -> Result<Box<Vec<Yak>>, redis::RedisError> {
     let mut connection = redis.get_connection()?;
@@ -234,7 +234,7 @@ pub async fn redis_fetch_yak(
 ///
 /// This function will return an error if the database query fails.
 #[instrument]
-pub async fn redis_insert_yak(
+async fn redis_insert_yak(
     redis: web::Data<redis::Client>,
     yak: Box<Yak>,
 ) -> Result<Box<Yak>, redis::RedisError> {
@@ -258,5 +258,52 @@ pub async fn redis_insert_yak(
             tracing::error!("Error: {}", err);
             Err(err)
         }
+    }
+}
+
+pub async fn fetch_yaks(
+    redis: &web::Data<Client>,
+    pgsql: &web::Data<PgPool>,
+) -> Result<Box<Vec<Yak>>, HttpResponse> {
+    let mut yaks = if let Ok(yaks) = redis_fetch_all_yaks(redis.clone()).await {
+        yaks
+    } else {
+        tracing::error!("Error fetching yaks from redis");
+        return Err(HttpResponse::InternalServerError().body("Error fetching yaks from cache"));
+    };
+    if yaks.is_empty() {
+        tracing::error!("No yaks found in redis, fetching from postgres");
+        yaks = if let Ok(yaks) = pgsql_fetch_all_yaks(pgsql.clone()).await {
+            let _ = redis_insert_all_yaks(redis.clone(), *yaks.clone()).await;
+            yaks
+        } else {
+            tracing::error!("Error fetching yaks from postgres");
+            return Err(
+                HttpResponse::InternalServerError().body("Error fetching yaks from postgres")
+            );
+        };
+    }
+    Ok(yaks)
+}
+
+pub async fn fetch_yak(
+    redis: web::Data<Client>,
+    pgsql: web::Data<PgPool>,
+    id: i32,
+) -> Result<Yak, HttpResponse> {
+    match redis_fetch_yak(redis.clone(), id).await {
+        Ok(yak) => Ok(*yak),
+        Err(_) => match pgsql_fetch_yak(pgsql.clone(), id).await {
+            Ok(yak) => {
+                if let Err(err) = redis_insert_yak(redis.clone(), yak.clone()).await {
+                    tracing::error!("Error: {}", err);
+                }
+                Ok(*yak)
+            }
+            Err(err) => {
+                tracing::error!("Error: {}", err);
+                Err(HttpResponse::NotFound().body("No yak found"))
+            }
+        },
     }
 }
