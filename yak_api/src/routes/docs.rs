@@ -15,7 +15,7 @@ use crate::models;
             yak::get_yak
         ),
         components(
-            schemas(yak::YakCreate, yak::YakDelete, yak::YakUpdate,models::yak::Yak )
+            schemas(yak::YakCreate, yak::YakDelete, yak::YakUpdate,models::yak::Yak,  ),
         ),
         tags(
             (name = "yak", description = "Yak related operations")

@@ -13,3 +13,8 @@ dev:
 	cargo run
 migrate:
 	sqlx database drop && sqlx database create && sqlx migrate run
+
+infra-docker-up:
+	docker-compose -f infra/docker-compose.yml up -d
+infra-docker-down:
+	docker-compose -f infra/docker-compose.yml down
