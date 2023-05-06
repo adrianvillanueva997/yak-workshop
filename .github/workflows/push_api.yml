@@ -53,9 +53,18 @@ jobs:
         uses: docker/setup-qemu-action@v2.1.0
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v2.5.0
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
       - name: Build
         uses: docker/build-push-action@v4.0.0
         with:
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
           context: yak_api
           file: yak_api/Dockerfile
           platforms: ${{ matrix.architectures }}
