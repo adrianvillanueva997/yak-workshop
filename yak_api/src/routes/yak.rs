@@ -66,7 +66,8 @@ pub async fn create_yak(yak: web::Json<YakCreate>, pgsql: web::Data<PgPool>) -> 
         path = "/yak",
         responses(
             (status = 200, description = "Yaks found", body = Vec<Yak>),
-            (status = 404, description = "No yaks found")
+            (status = 504, description = "Internal server error"),
+            (status = 501, description = "No yaks found"),
         ),
         tag = "Yak"
 
