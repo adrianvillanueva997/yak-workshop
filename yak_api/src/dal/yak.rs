@@ -290,15 +290,15 @@ pub async fn fetch_yak(
     redis: web::Data<Client>,
     pgsql: web::Data<PgPool>,
     id: i32,
-) -> Result<Yak, HttpResponse> {
+) -> Result<Box<Yak>, HttpResponse> {
     match redis_fetch_yak(redis.clone(), id).await {
-        Ok(yak) => Ok(*yak),
+        Ok(yak) => Ok(yak),
         Err(_) => match pgsql_fetch_yak(pgsql.clone(), id).await {
             Ok(yak) => {
                 if let Err(err) = redis_insert_yak(redis.clone(), yak.clone()).await {
                     tracing::error!("Error: {}", err);
                 }
-                Ok(*yak)
+                Ok(yak)
             }
             Err(err) => {
                 tracing::error!("Error: {}", err);
